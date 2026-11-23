@@ -18,6 +18,8 @@ interface CliOptions extends KeyCommandOptions {
   apiKey?: string;
   profile: string;
   model?: string;
+  /** Arguments after a bare `--`, forwarded verbatim to the launched agent. */
+  passthrough?: string[];
 }
 
 function rootUrl(url: string): string {
@@ -60,6 +62,10 @@ export function parseArgs(argv: string[]): { command?: string; options: CliOptio
   let command: string | undefined;
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
+    if (arg === '--') {
+      options.passthrough = argv.slice(index + 1);
+      break;
+    }
     if (!arg.startsWith('-') && !command) {
       command = arg;
       continue;
@@ -420,7 +426,7 @@ async function launchClaude(options: CliOptions): Promise<number> {
   const env = claudeLaunchEnv(
     options, apiKey, rosters.available, process.env, os.homedir(), rosters.full,
   );
-  return runChild('claude', [], env);
+  return runChild('claude', options.passthrough ?? [], env);
 }
 
 export function codexArgs(url: string, selected: string): string[] {
@@ -444,7 +450,7 @@ async function launchCodex(options: CliOptions): Promise<number> {
   ).id;
   const env = { ...process.env, FREELLMAPI_API_KEY: apiKey };
   const args = codexArgs(options.url, selected);
-  return runChild('codex', args, env);
+  return runChild('codex', [...args, ...(options.passthrough ?? [])], env);
 }
 
 async function runDoctor(options: CliOptions): Promise<number> {

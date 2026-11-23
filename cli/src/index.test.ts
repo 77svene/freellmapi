@@ -18,6 +18,14 @@ describe('CLI arguments and launchers', () => {
     }
   });
 
+  it('forwards everything after a bare -- to the launched agent', () => {
+    const { command, options } = parseArgs(['launch', '--api-key', 'k', '--', '-p', '--model', 'x', 'hi']);
+    expect(command).toBe('launch');
+    expect(options.apiKey).toBe('k');
+    expect(options.passthrough).toEqual(['-p', '--model', 'x', 'hi']);
+    expect(options.args).toEqual([]);
+  });
+
   it('parses setup options before or after the command', () => {
     expect(parseArgs([
       '--url',
